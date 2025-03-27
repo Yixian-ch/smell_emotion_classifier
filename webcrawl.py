@@ -27,7 +27,7 @@ def get_json_data(api_url,out_put:Path)->None:
         with open(file_path,'w+') as f:
             json.dump(response,f,indent=2)
 
-        time.sleep(1)
+        # time.sleep(1)
         if i % 10 == 0:
             print(f"processed {i} pages")
 
