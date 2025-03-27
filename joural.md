@@ -1,0 +1,6 @@
+# Data collections
+## Data structure
+Our collected data contains four keys, what we are interested is the `results` that has the emotion and description text. The problem is what kind of data we need to extract. For example, for the key `results` its value is a list of dict where each dict represents one post, 
+The datastructure is clear now, as raw data be collected, we will extract data from it and save it to a floder called data. The structure of files: a json file with only one key which is nameds `articles`. It contains a list of dict where each dict is an article of the current file. The dictionary contains `doc_url` (the url where excerpt descriptions are collected), `emotions` (emotions of the current article), `excerpt` (description), `id` (the order how we collect the data), `title` (the title showed in the current article).
+### data preprocessing
+- some articles has many emotions that leds to the ambigus, so we choose to select only those articles which contain only target emotions. For example, for love, the key `emotions` can only contain `love` nothing else.
