@@ -1,4 +1,4 @@
-from webcrawl import Path,json,argparse,extract_data,save_json
+from source.webcrawl import Path,json,argparse,extract_data,save_json
 
 def clean(path:Path,emotion:str,output:Path) -> None:
     emotions = ["trust","love","sadness","fear"]
@@ -17,7 +17,7 @@ def clean(path:Path,emotion:str,output:Path) -> None:
 
 def restore(input_path:Path,output_path:Path): 
     """
-    If you miskate spoli your data, the way to recover them
+    If you miskate spoil your data, the way to recover them
     """
     output_path.mkdir(parent=True,exist_ok=True)
     for i, path in enumerate(input_path.iterdir()):
