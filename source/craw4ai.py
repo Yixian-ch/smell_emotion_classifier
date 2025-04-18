@@ -16,18 +16,17 @@ from crawl4ai import (
 )
 from crawl4ai.extraction_strategy import LLMExtractionStrategy
 
-# 定义 Pydantic 模型，描述我们要提取的字段
+# define Pydantic model，describe what we want to extract
 class OpenAIModelFee(BaseModel):
     title: str = Field(..., description="Artile's title to describe the emotion")
     emotion: str = Field(..., description="Described emotion")
     excerpt: str = Field(..., description="description for the emotion")
 
 async def main(emotion):
-    # 确保已设置环境变量 OPENAI_API_KEY
     provider = "deepseek/deepseek-chat"
     api_token = ""
 
-    # 配置 LLM
+    # Set up LLM
     llm_conf = LLMConfig(provider=provider, api_token=api_token)
     llm_strategy = LLMExtractionStrategy(
         llm_config=llm_conf,
@@ -39,7 +38,7 @@ async def main(emotion):
         extra_args={"temperature": 0, "max_tokens": 3000},
     )
 
-    # 配置浏览器和爬取策略
+    # set up browser and crawler config
     browser_conf = BrowserConfig(headless=True)
     run_conf = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
@@ -48,7 +47,7 @@ async def main(emotion):
         page_timeout=60000,
     )
 
-    # 执行爬取并打印结构化结果
+    # run
     async with AsyncWebCrawler(config=browser_conf) as crawler:
         # for i in range(10):
         result = await crawler.arun(
