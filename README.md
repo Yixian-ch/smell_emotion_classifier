@@ -3,6 +3,8 @@
 ### Corpus:
 Excerpts from documents that were collected based on their association with olfactory contexts, specifically from the Odeuropa Smell Browser project. These excerpts contain words linked to different emotions.
 
+[Access the data on GDrive](https://drive.google.com/drive/folders/1KXq1Ulc01vNQN3bL8O-58WdWGYS39En4)
+
 ### Classification objective:
 We are working with excerpts that have words associated with the following emotions:
 1. love
