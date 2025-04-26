@@ -1,4 +1,4 @@
-from source.webcrawl import Path,json,argparse,extract_data,save_json
+from webcrawl import Path,json,argparse,extract_data,save_json
 
 def clean(path:Path,emotion:str,output:Path) -> None:
     emotions = ["trust","love","sadness","fear"]
@@ -17,7 +17,7 @@ def clean(path:Path,emotion:str,output:Path) -> None:
 
 def restore(input_path:Path,output_path:Path): 
     """
-    If you miskate spoil your data, the way to recover them
+    If you spoil your data, the way to recover them
     """
     output_path.mkdir(parent=True,exist_ok=True)
     for i, path in enumerate(input_path.iterdir()):
@@ -28,7 +28,7 @@ def restore(input_path:Path,output_path:Path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("path2clean", help="where the data are saved")
+    parser.add_argument("path2clean", help="where the data is saved")
     parser.add_argument("emotion", help="the emotion to filter")
     parser.add_argument("output", help="where the filtered files will be saved")
     parser.add_argument("-r","--recover", nargs=2, metavar=('INPUT','OUTPUT'),help="the data are spoiled? No worries, you can recover them from raw data. to use: INPUT path(raw data) OUTPUT (restored data)")
