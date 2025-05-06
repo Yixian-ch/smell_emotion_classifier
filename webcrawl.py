@@ -24,7 +24,7 @@ class Corpus:
 def get_args():
     """
     CLI: 
-    python webcrawl.py -bu <base_url> -od <output_directory> -pr <start_page> <end_page>
+    python webcrawl.py -bu <base_url> -od <output_directory> -pr <start_page> <end_page(inclusive)>
     Example:
     python webcrawl.py -bu "https://exemple.com/api/page={page}" -od output -pr 1 100
     """
