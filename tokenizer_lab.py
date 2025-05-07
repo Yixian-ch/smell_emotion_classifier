@@ -6,13 +6,23 @@ import argparse
 from pathlib import Path
 
 def get_args():
+    """
+    CLI:
+    python tokenizer_lab.py -ip <CSV file> -nd <number of documents> -sw <stopword library or "none">
+    """
     parser = argparse.ArgumentParser(description='Compare CountVectorizer and TfidfVectorizer on a French corpus')
     parser.add_argument("-nd", "--nb_docs", required=True, type=int)
     parser.add_argument("-ip", "--input_path", required=True, help="CSV file with a 'text' column.")
     parser.add_argument("-sw", "--stop_words_lib", choices=("nltk", "spacy", "combined", "none"), help="Choose stopword source", required=True)
     return parser.parse_args()
 
-def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str):
+def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
+    """
+    This script applies both CountVectorizer and TfidfVectorizer to help evaluate 
+    which tokenizer works best for a given French corpus. It also lets you compare 
+    different stopword sources (or none). The goal is to make intentional choices that improve 
+    representation and reduce the overall number of features.
+    """
     df = pd.read_csv(path, encoding='utf-8')
     docs = df["text"].head(nb_docs).str.lower()
 
