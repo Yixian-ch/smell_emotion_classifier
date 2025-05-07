@@ -1,0 +1,52 @@
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from nltk.corpus import stopwords
+from spacy.lang.fr.stop_words import STOP_WORDS as spacy_french_stopwords
+import pandas as pd
+import argparse
+from pathlib import Path
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Compare CountVectorizer and TfidfVectorizer on a French corpus')
+    parser.add_argument("-nd", "--nb_docs", required=True, type=int)
+    parser.add_argument("-ip", "--input_path", required=True, help="CSV file with a 'text' column.")
+    parser.add_argument("-sw", "--stop_words_lib", choices=("nltk", "spacy", "combined", "none"), help="Choose stopword source", required=True)
+    return parser.parse_args()
+
+def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str):
+    df = pd.read_csv(path, encoding='utf-8')
+    docs = df["text"].head(nb_docs).str.lower()
+
+    if stop_words_lib == "spacy":
+        stop_words = list(spacy_french_stopwords)
+    elif stop_words_lib == "nltk":
+        stop_words = stopwords.words('french')
+    elif stop_words_lib == "combined":
+        stop_words = list(set(word.lower() for word in stopwords.words('french')).union(
+                          word.lower() for word in spacy_french_stopwords))
+    else:
+        stop_words = None
+
+    tokenizers = {
+        "CountVectorizer": CountVectorizer(stop_words=stop_words, min_df=2),
+        "TfidfVectorizer": TfidfVectorizer(stop_words=stop_words, min_df=2)
+    }
+
+    for name, vectorizer in tokenizers.items():
+        print(f"\nTokenizer: {name}")
+
+        matrix = vectorizer.fit_transform(docs)
+        feature_names = vectorizer.get_feature_names_out()
+        df_vector = pd.DataFrame(matrix.toarray(), columns=feature_names)
+
+        top_n = 20
+        total_scores = df_vector.sum(axis=0)
+        top_words = total_scores.sort_values(ascending=False).head(top_n)
+
+        print(f"Top {top_n} words for {nb_docs} docs:")
+        print(f"Total number of features for {name}: {len(feature_names)}\n")
+        print(top_words)
+
+if __name__ == "__main__":
+    args = get_args()
+    print(f"Stop words library: {args.stop_words_lib.upper()}")
+    run_tokenizers(Path(args.input_path), args.nb_docs, args.stop_words_lib)
