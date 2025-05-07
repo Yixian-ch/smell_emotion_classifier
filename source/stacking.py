@@ -6,7 +6,8 @@ import os
 import json
 from datetime import datetime
 from nltk.stem.snowball import FrenchStemmer
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import RegexpTokenizer
+# from nltk.wordnet import WordNetLemmatizer
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
@@ -20,10 +21,9 @@ import seaborn as sns
 import pickle
 from argparse import ArgumentParser
 
-# Download required NLTK resources
 nltk.download('punkt', quiet=True)
 
-# Create a simplified directory for reports and models 
+# Create a directory for reports and models 
 def create_report_directory(args):
     """
     Create a directory for storing essential reports and models
@@ -31,11 +31,11 @@ def create_report_directory(args):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_dir = f"{args.output}{timestamp}"
     
-    # Create main directory
+    # Create main dir
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)
         
-    # Create only essential subdirectories
+    # Create subdirs
     os.makedirs(os.path.join(report_dir, "models"), exist_ok=True)
     os.makedirs(os.path.join(report_dir, "visualizations"), exist_ok=True)
             
@@ -71,8 +71,9 @@ def preprocessing(text):
     with open("./stopwords-fr.txt") as f:
         stop_words = f.read().split()
     
-    # Tokenize the text
-    tokens = word_tokenize(text, language='french')
+    # Tokenize the text removing punks
+    tokenizer = RegexpTokenizer(r'\w+')
+    tokens = tokenizer.tokenize(text)
     
     # Initialize French stemmer
     stemmer = FrenchStemmer()
@@ -97,13 +98,25 @@ def load_data(args):
         'surprise': 3
     })
     
+    # Add word count column
+    data['word_count'] = data['excerpt'].str.split().str.len()
+    
+    # Calculate word count before preprocessing
+    emotions_count_before = data.groupby('emotions')['word_count'].sum().to_dict()
+    print(f"Before preprocessing each emotion has {emotions_count_before} words")
+    
     # Apply preprocessing
     print("Applying preprocessing with stemming")
     data["excerpt_clean"] = data['excerpt'].apply(preprocessing)
     
-    return data
+    # Calculate word count after preprocessing
+    data['word_count_clean'] = data['excerpt_clean'].str.split().str.len()
+    emotions_count_after = data.groupby('emotions')['word_count_clean'].sum().to_dict()
+    print(f"After preprocessing each emotion has {emotions_count_after} words")
+    
+    return data, emotions_count_before, emotions_count_after
 
-# Generate meta features using cross-validation for basic vectorized text
+# Generate meta features using cross-validation 
 def generate_meta_features(classifiers, X_train_text, y_train, X_test_text, n_classes, cv=5):
     """
     Generate meta-features for stacking using cross-validation
@@ -184,7 +197,7 @@ def generate_meta_features(classifiers, X_train_text, y_train, X_test_text, n_cl
     
     return X_meta_train, X_meta_test, cv_results
 
-# Plot confusion matrix
+
 def plot_confusion_matrix(y_test, y_pred, emotion_names, report_dir):
     """
     Create and save confusion matrix visualization
@@ -198,6 +211,99 @@ def plot_confusion_matrix(y_test, y_pred, emotion_names, report_dir):
     plt.savefig(os.path.join(report_dir, "visualizations", "confusion_matrix.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
+def plot_word_distributions(data, report_dir, emotions_count_before, emotions_count_after):
+    """
+    Create visualizations for word count distributions
+    """
+    # 1. Box plot of word count distribution
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(x='emotions', y='word_count', data=data)
+    plt.title('Word Count Distribution Box Plot')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(os.path.join(report_dir, "visualizations", "word_count_boxplot.png"))
+    plt.close()
+
+    # 2. Histograms of word count distribution for each emotion
+    plt.figure(figsize=(15, 10))
+    for i, emotion in enumerate(data['emotions'].unique()):
+        plt.subplot(2, 2, i+1)
+        sns.histplot(data[data['emotions'] == emotion]['word_count'], bins=30)
+        plt.title(f'Word Count Distribution - {emotion}')
+    plt.tight_layout()
+    plt.savefig(os.path.join(report_dir, "visualizations", "word_count_histograms.png"))
+    plt.close()
+
+    # 3. Bar plot comparing average word count across emotions
+    plt.figure(figsize=(10, 6))
+    emotion_word_counts = data.groupby('emotions')['word_count'].mean().sort_values(ascending=False)
+    sns.barplot(x=emotion_word_counts.index, y=emotion_word_counts.values)
+    plt.title('Average Word Count Comparison Across Emotions')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(os.path.join(report_dir, "visualizations", "emotion_word_count_comparison.png"))
+    plt.close()
+
+    # 4. Comparison of word counts before and after preprocessing
+    plt.figure(figsize=(12, 6))
+    before_after = pd.DataFrame({
+        'emotion': list(emotions_count_before.keys()) + list(emotions_count_after.keys()),
+        'word_count': list(emotions_count_before.values()) + list(emotions_count_after.values()),
+        'stage': ['Before Preprocessing'] * 4 + ['After Preprocessing'] * 4
+    })
+    sns.barplot(x='emotion', y='word_count', hue='stage', data=before_after)
+    plt.title('Word Count Comparison: Before vs After Preprocessing')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(os.path.join(report_dir, "visualizations", "preprocessing_comparison.png"))
+    plt.close()
+
+def plot_top_words(data, report_dir):
+    """
+    Create visualization for top 10 words in each emotion category
+    """
+    # Create a figure with subplots for each emotion
+    plt.figure(figsize=(15, 10))
+    
+    # Get unique emotions
+    emotions = data['emotions'].unique()
+    
+    # For each emotion
+    for i, emotion in enumerate(emotions):
+        # Get all words for this emotion
+        words = ' '.join(data[data['emotions'] == emotion]['excerpt_clean']).split()
+        
+        # Count word frequencies
+        word_freq = pd.Series(words).value_counts()
+        
+        # Get top 10 words
+        top_words = word_freq.head(10)
+        
+        # Create subplot
+        plt.subplot(2, 2, i+1)
+        
+        # Create horizontal bar plot
+        sns.barplot(x=top_words.values, y=top_words.index)
+        plt.title(f'Top 10 Words - {emotion}')
+        plt.xlabel('Frequency')
+        plt.ylabel('Words')
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(report_dir, "visualizations", "top_words_by_emotion.png"), dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Also save the raw data to a text file
+    with open(os.path.join(report_dir, "top_words_by_emotion.txt"), 'w', encoding='utf-8') as f:
+        f.write("Top 10 Words for Each Emotion Category:\n\n")
+        for emotion in emotions:
+            words = ' '.join(data[data['emotions'] == emotion]['excerpt_clean']).split()
+            word_freq = pd.Series(words).value_counts()
+            top_words = word_freq.head(10)
+            
+            f.write(f"\n{emotion.upper()}:\n")
+            for word, freq in top_words.items():
+                f.write(f"{word}: {freq}\n")
+
 # Main function to run the stacking classifier
 def run_stacking_classifier():
     """Main function to run the stacking classifier with preprocessing"""
@@ -210,7 +316,12 @@ def run_stacking_classifier():
     
     # Load and preprocess data
     print("Loading and preprocessing data...")
-    data = load_data(args)
+    data, emotions_count_before, emotions_count_after = load_data(args)
+    
+    # Generate visualizations
+    print("\nGenerating visualizations...")
+    plot_word_distributions(data, report_dir, emotions_count_before, emotions_count_after)
+    plot_top_words(data, report_dir)
     
     # Check class distribution
     print("\nClass distribution:")
@@ -248,17 +359,17 @@ def run_stacking_classifier():
     
     rf_pipeline = Pipeline([
         ('vectorizer', TfidfVectorizer(ngram_range=(1, 2), min_df=2, sublinear_tf=True)),
-        ('classifier', RandomForestClassifier(n_estimators=200, max_depth=10, class_weight='balanced', random_state=42))
+        ('classifier', RandomForestClassifier(n_estimators=80, max_depth=6, class_weight='balanced', random_state=42))
     ])
     
-    # Create dictionary of base classifiers
+
     base_classifiers = {
         'MultinomialNB': nb_pipeline,
         'SVM': svm_pipeline,
         'RandomForest': rf_pipeline
     }
     
-    # Generate meta-features using cross-validation
+
     print("\nGenerating meta-features...")
     X_meta_train, X_meta_test, cv_results = generate_meta_features(
         base_classifiers, 
@@ -269,7 +380,7 @@ def run_stacking_classifier():
         cv=5
     )
     
-    # Define meta-classifier
+
     print("\nTraining meta-classifier...")
     meta_classifier = LogisticRegression(
         C=1.0,
@@ -280,10 +391,10 @@ def run_stacking_classifier():
         random_state=42
     )
     
-    # Train meta-classifier
+
     meta_classifier.fit(X_meta_train, y_train)
     
-    # Predict with meta-classifier
+
     y_meta_pred = meta_classifier.predict(X_meta_test)
     
     # Evaluate stacking model performance
@@ -300,7 +411,7 @@ def run_stacking_classifier():
     # Create and save the confusion matrix
     plot_confusion_matrix(y_test, y_meta_pred, emotion_names, report_dir)
     
-    # Create combined summary report
+    # Create summary report
     summary = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "dataset_info": {
@@ -353,6 +464,6 @@ def run_stacking_classifier():
     print(f"\nResults and model saved to {report_dir}")
     return report_dir
 
-# If running as a script
+
 if __name__ == "__main__":
     run_stacking_classifier()
