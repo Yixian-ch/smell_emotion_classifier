@@ -26,7 +26,11 @@ def concatanate_csv(args):
         combined_df = combined_df.rename(columns={'text':'excerpt', 'emotion':'emotions'})
         # save concatenated df
         combined_df.to_csv(args.output, index=False)
-        print(combined_df.head())
+        love = len(combined_df[combined_df['emotions'] == 'love'])
+        disgust = len(combined_df[combined_df['emotions'] == 'disgust'])
+        fear = len(combined_df[combined_df['emotions'] == 'fear'])
+        surprise = len(combined_df[combined_df['emotions'] == 'surprise'])
+        print(f"for each emotion there are {love} love, {disgust} disgust, {fear} fear, {surprise} surprise")
     else:
         raise ValueError("Excepts 4 csv files")
     
