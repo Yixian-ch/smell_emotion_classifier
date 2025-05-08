@@ -1,0 +1,30 @@
+{
+    "dataset_info": {
+        "size": 2593,
+        "class_distribution": {
+            "disgust": 801,
+            "love": 798,
+            "surprise": 504,
+            "fear": 490
+        }
+    },
+    "stacking_model": {
+        "accuracy": 0.9595375722543352,
+        "f1_score": 0.9564338754447546,
+        "classification_report": "              precision    recall  f1-score   support\n\n        fear       0.92      0.95      0.93        98\n        love       0.98      0.97      0.98       160\n     disgust       0.97      0.95      0.96       160\n    surprise       0.94      0.96      0.95       101\n\n    accuracy                           0.96       519\n   macro avg       0.95      0.96      0.96       519\nweighted avg       0.96      0.96      0.96       519\n"
+    },
+    "base_classifiers": {
+        "MultinomialNB": {
+            "accuracy": 0.8709055876685935,
+            "f1_score": 0.8542828481698522
+        },
+        "SVM": {
+            "accuracy": 0.9595375722543352,
+            "f1_score": 0.9561643671406932
+        },
+        "RandomForest": {
+            "accuracy": 0.8747591522157996,
+            "f1_score": 0.8584847725695637
+        }
+    }
+}
