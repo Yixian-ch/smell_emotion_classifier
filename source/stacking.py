@@ -12,7 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix
+from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix, recall_score
 from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -288,6 +288,36 @@ def plot_top_words(data, report_dir):
             for word, freq in top_words.items():
                 f.write(f"{word}: {freq}\n")
 
+def evaluate_model(y_true, y_pred, emotion_names):
+    """
+    Comprehensive model evaluation
+    """
+    # 计算各种指标
+    accuracy = accuracy_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred, average='macro')
+    report = classification_report(y_true, y_pred, target_names=emotion_names)
+    
+    # 计算每个类别的召回率
+    recalls = {}
+    for i, emotion in enumerate(emotion_names):
+        recall = recall_score(y_true, y_pred, labels=[i], average='micro')
+        recalls[emotion] = float(recall)
+    
+    # 计算宏平均召回率
+    macro_recall = recall_score(y_true, y_pred, average='macro')
+    
+    # 保存详细结果
+    results = {
+        'accuracy': float(accuracy),
+        'f1_score': float(f1),
+        'macro_recall': float(macro_recall),
+        'per_class_recall': recalls,
+        'classification_report': report,
+        'confusion_matrix': confusion_matrix(y_true, y_pred).tolist()
+    }
+    
+    return results
+
 # Main function to run the stacking classifier
 def run_stacking_classifier():
     """
@@ -334,7 +364,7 @@ def run_stacking_classifier():
     # Define base classifiers
     print("\nDefining base classifiers...")
     nb_pipeline = Pipeline([
-        ('vectorizer', CountVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.9)),
+        ('i', CountVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.9)),
         ('classifier', MultinomialNB(alpha=0.5))
     ])
     
@@ -397,44 +427,60 @@ def run_stacking_classifier():
     # Create and save the confusion matrix
     plot_confusion_matrix(y_test, y_meta_pred, emotion_names, report_dir)
     
-    # Create summary report
+    # 评估最终模型
+    final_results = evaluate_model(y_test, y_meta_pred, emotion_names)
+    
+    # 创建总结报告
     summary = {
         "dataset_info": {
             "size": len(data),
             "class_distribution": class_distribution.to_dict()
         },
         "stacking_model": {
-            "accuracy": float(stacking_accuracy),
-            "f1_score": float(stacking_f1),
-            "classification_report": stacking_report,
+            "accuracy": final_results['accuracy'],
+            "f1_score": final_results['f1_score'],
+            "macro_recall": final_results['macro_recall'],
+            "per_class_recall": final_results['per_class_recall'],
+            "classification_report": final_results['classification_report'],
         },
         "base_classifiers": {}
     }
     
-    # Evaluate and add individual base classifiers to summary
+    # 评估并添加各个基分类器的结果
     print("\n===== Base Classifier Performance =====")
     
     for name, pipeline in base_classifiers.items():
-        # Get predictions
+        # 获取预测
         y_pred = pipeline.predict(X_test_list)
         
-        # Calculate metrics
-        accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average='macro')
+        # 计算指标
+        results = evaluate_model(y_test, y_pred, emotion_names)
         
         print(f"\n{name}:")
-        print(f"Accuracy: {accuracy:.4f}")
-        print(f"Macro F1: {f1:.4f}")
+        print(f"Accuracy: {results['accuracy']:.4f}")
+        print(f"Macro F1: {results['f1_score']:.4f}")
+        print(f"Macro Recall: {results['macro_recall']:.4f}")
         
-        # Add to summary
+        # 添加到总结
         summary["base_classifiers"][name] = {
-            "accuracy": float(accuracy),
-            "f1_score": float(f1)
+            "accuracy": results['accuracy'],
+            "f1_score": results['f1_score'],
+            "macro_recall": results['macro_recall'],
+            "per_class_recall": results['per_class_recall']
         }
     
-    # Save the combined summary report
+    # 保存总结报告
     with open(report_dir / "results_summary.json", 'w') as f:
         json.dump(summary, f, indent=4)
+    
+    # 打印最终结果
+    print("\n===== Final Results =====")
+    print(f"Accuracy: {final_results['accuracy']:.4f}")
+    print(f"Macro F1: {final_results['f1_score']:.4f}")
+    print(f"Macro Recall: {final_results['macro_recall']:.4f}")
+    print("\nPer-class Recall:")
+    for emotion, recall in final_results['per_class_recall'].items():
+        print(f"{emotion}: {recall:.4f}")
     
     # Save only the final stacking model (most important)
     model_info = {
