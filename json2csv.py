@@ -30,7 +30,7 @@ def get_args() -> ArgumentParser:
 
         Emotions must be given as the ordre of input files
     """
-    arg: ArgumentParser = ArgumentParser()
+    arg: ArgumentParser = ArgumentParser(description="Filtering and reformatting data")
     arg.add_argument("-i", "--input", nargs="+", required=True, help="input of web crawlled data, normally be a list of directories")
     arg.add_argument("-e", "--emotions", required=True, nargs="+",help="emotion to save for each given folder")
     arg.add_argument("--intermedia", default=False, help="if save the intermediate data")
@@ -44,7 +44,8 @@ def select_emotion(args) -> Corpus:
     Returns:
         Corpus: selected corpus
     """
-    big_dir = Corpus()
+    filtered_corpus = Corpus()
+
     for idx, directory in enumerate(args.input):
         print(f"current folder {directory}, select emotion {args.emotions[idx]}")
 
@@ -52,10 +53,10 @@ def select_emotion(args) -> Corpus:
             corpus = load_json(file)
             for article in corpus.articles:
                 if args.emotions[idx] in article.emotions and len(article.emotions) == 1:
-                    big_dir.articles.append(article)
+                    filtered_corpus.articles.append(article)
 
-    print(f"total articles after the selection: {len(big_dir.articles)}")
-    return big_dir
+    print(f"total articles after the selection: {len(filtered_corpus.articles)}")
+    return filtered_corpus
     
 def corpus_to_df(corpus: Corpus) -> pd.DataFrame:
     """
@@ -91,19 +92,15 @@ def main() -> None:
     except:
         raise ValueError("to use python json2csv -i ../data/disgust_output/data/ ../data/love_output/data/ ../data/fear_output/data/ -e disgust love fear -o output.csv")
     
-    # Load and preprocess data
-    print("Loading data...")
-    corpus = select_emotion(args)
 
-    # If true save selected corpus
+    print("Loading data...")
+    filtered_corpus = select_emotion(args)
+
     if args.intermedia:
         dir = create_directory()
-        json.dump(corpus,dir,ensure_ascii=None,indent=2)
+        json.dump(filtered_corpus,dir,ensure_ascii=None,indent=2)
 
-    # Convert to DataFrame
-    data: pd.DataFrame = corpus_to_df(corpus)
-    
-    # Save the CSV
+    data: pd.DataFrame = corpus_to_df(filtered_corpus)
     data.to_csv(args.output, index=False)
     print(f"\nSuccessfully created CSV with {len(data)} entries at {args.output}")
 
