@@ -77,6 +77,7 @@ def json_to_csv(emotion: str, filtered_data_folder: Path, output_folder: Path) -
     df = pd.DataFrame(filtered_data)
     df.index += 1
     output_path = output_folder / f"{emotion}.csv"
+    print(f"Total rows in {emotion}.csv: {df.shape[0]}")
     df.to_csv(output_path, index=True, header=True)
 
 def main():
