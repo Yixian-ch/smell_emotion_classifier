@@ -76,6 +76,7 @@ def select_emotion(folders: List[Path], emotions: List[str]) -> Corpus:
                 the emotion or emotions.
     """
     filtered_corpus = Corpus()
+    emotion_counts = {emotion: 0 for emotion in emotions}
     for idx, folder in enumerate(folders):
         print(f"Current folder: {folder.name}, target emotion: {emotions[idx]}")
         json_files = list(folder.rglob("*json"))
@@ -84,6 +85,11 @@ def select_emotion(folders: List[Path], emotions: List[str]) -> Corpus:
             for article in corpus.articles:
                 if emotions[idx] in article.emotions and len(article.emotions) == 1:
                     filtered_corpus.articles.append(article)
+                    emotion_counts[emotion] += 1
+
+    print("\nEmotion counts summary:")
+    for emotion, count in emotion_counts.items():
+        print(f"{count} articles found for emotion: '{emotion}'")                
 
     print(f"Total articles after selection: {len(filtered_corpus.articles)}")
     return filtered_corpus
