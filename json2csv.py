@@ -1,10 +1,9 @@
 import json
 import pandas as pd
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Union
-from dataclasses import fields
-from webcrawl import Article, Corpus, load_json
-from argparse import ArgumentParser
+from webcrawl import Corpus, load_json
+import argparse
+from typing import List, Dict
 
 def create_directory() -> Path:
     """
@@ -18,27 +17,45 @@ def create_directory() -> Path:
 
     return dir
 
-def get_args() -> ArgumentParser:
+
+def get_args():
     """
     Parse command line arguments.
+    Allows iteration through one or several folder-and-emotion pairs.
     
     Returns:
-        ArgumentParser: Parsed command line arguments
+        Namespace: Parsed command line arguments.
         
+    CLI Usage:
+        python json2csv.py -i <folder_path(s)> -e <emotion(s)> -o <output CSV file name>
+    
     Example:
         python json2csv.py -i ../data/disgust_output/data/ ../data/love_output/data/ ../data/fear_output/data/ -e disgust love fear -o ../test.csv
 
-        Emotions must be given as the ordre of input files
+    Note:
+        Emotions must be provided in the same order as the input folders.
     """
-    arg: ArgumentParser = ArgumentParser(description="Filtering and reformatting data")
-    arg.add_argument("-i", "--input_folders", nargs="+", required=True, help="input of web crawlled data, normally be a list of directories")
-    arg.add_argument("-e", "--emotions", required=True, nargs="+",help="emotion to save for each given folder")
-    arg.add_argument("--intermedia", default=False, help="if save the intermediate data")
-    arg.add_argument("-o", "--output_file", required=True, help="csv result")
-    return arg.parse_args()
-from typing import List
+    parser = argparse.ArgumentParser(description="Filter and reformat data.")
+    parser.add_argument("-i", "--input_folders", nargs="+", required=True,
+                        help="Input directories containing web-crawled data. Must be a list of directories.")
+    parser.add_argument("-e", "--emotions", nargs="+", required=True,
+                        help="List of emotions corresponding to each input folder.")
+    parser.add_argument("--intermediate", default=False, 
+                        help="If set, saves the intermediate data.")
+    parser.add_argument("-o", "--output_file", required=True,
+                        help="Path to the output CSV file.")
 
-def select_emotion(folders: List, emotions: List) -> Corpus:
+    args = parser.parse_args()
+
+    if len(args.input_folders) != len(args.emotions):
+        print("The number of input folders must match the number of emotions.")
+        parser.print_help()
+        exit(1)
+
+    return args
+
+
+def select_emotion(folders: List[Path], emotions: List[str]) -> Corpus:
     """
     Filters articles from a list of folders, keeping only those that are labeled 
     with a single, specified emotion.
@@ -48,15 +65,15 @@ def select_emotion(folders: List, emotions: List) -> Corpus:
     target emotion and only that emotion.
 
     Args:
-        folders (List): A list of folder paths containing JSON files. 
+        folders (List[Path]): A list of folder paths containing JSON files. 
                         Each folder should contain data corresponding to a single emotion.
                         Example: ["fear_output/data/", "love_output/data/"]
-        emotions (List): A list of target emotions corresponding to each folder.
+        emotions (List[str]): A list of target emotions corresponding to each folder.
                          The order of emotions must match the order of folders.
 
     Returns:
-        Corpus: A Corpus object containing only the filtered articles that match 
-                the specified criteria.
+        filtered_corpus (Corpus): A Corpus object containing only the filtered articles that match 
+                the emotion or emotions.
     """
     filtered_corpus = Corpus()
     for idx, folder in enumerate(folders):
@@ -89,7 +106,7 @@ def corpus_to_df(corpus: Corpus) -> pd.DataFrame:
 
         row: Dict[str, str] = {
             "excerpt": article.excerpt,
-            "emotions": emotion
+            "emotion": emotion
         }
 
         rows.append(row)
@@ -100,24 +117,19 @@ def main() -> None:
     """
     Main function to process JSON files and convert them to a single CSV.
     """
-
-    try:
-        args = get_args()
-        folders = Path(args.input_folders)
-        emotions = args.emotions
-    except:
-        raise ValueError("to use python json2csv -i ../data/disgust_output/data/ ../data/love_output/data/ ../data/fear_output/data/ -e disgust love fear -o output.csv")
-    
-
+    args = get_args()
+    folders = [Path(f) for f in args.input_folders]
+    emotions = args.emotions
+ 
     print("Loading data...")
     filtered_corpus = select_emotion(folders, emotions)
-    if args.intermedia:
+    if args.intermediate:
         dir = create_directory()
         json.dump(filtered_corpus,dir,ensure_ascii=None,indent=2)
 
     data: pd.DataFrame = corpus_to_df(filtered_corpus)
-    data.to_csv(args.output, index=False)
-    print(f"\nSuccessfully created CSV with {len(data)} entries at {args.output}")
+    data.to_csv(args.output_file, index=False)
+    print(f"\nSuccessfully created CSV with {data.shape[0]} entries at {args.output_file}")
 
         
 if __name__ == "__main__":
