@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import re
 import nltk
-import os
 import json
 from datetime import datetime
 from nltk.stem.snowball import FrenchStemmer
@@ -19,6 +18,7 @@ from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
+from pathlib import Path
 from argparse import ArgumentParser
 
 nltk.download('punkt', quiet=True)
@@ -28,16 +28,14 @@ def create_report_directory(args):
     """
     Create a directory for storing essential reports and models
     """
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_dir = f"{args.output}{timestamp}"
+    report_dir = Path(args.output)
     
-    # Create main dir
-    if not os.path.exists(report_dir):
-        os.makedirs(report_dir)
-        
-    # Create subdirs
-    os.makedirs(os.path.join(report_dir, "models"), exist_ok=True)
-    os.makedirs(os.path.join(report_dir, "visualizations"), exist_ok=True)
+    report_dir.mkdir(exist_ok=True)
+
+    subdirs = ["models", "visualizations"]
+    for sub in subdirs:
+        sub_dir = report_dir / sub
+        sub_dir.mkdir(exist_ok=True)
             
     return report_dir
 
@@ -208,7 +206,7 @@ def plot_confusion_matrix(y_test, y_pred, emotion_names, report_dir):
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.title('Confusion Matrix - Stacking Model')
-    plt.savefig(os.path.join(report_dir, "visualizations", "confusion_matrix.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(report_dir / "visualizations" / "confusion_matrix.png")
     plt.close()
 
 def plot_word_distributions(data, report_dir, emotions_count_before, emotions_count_after):
@@ -219,9 +217,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
     plt.figure(figsize=(12, 6))
     sns.boxplot(x='emotions', y='word_count', data=data)
     plt.title('Word Count Distribution Box Plot')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig(os.path.join(report_dir, "visualizations", "word_count_boxplot.png"))
+    plt.savefig(report_dir / "visualizations" / "word_count_boxplot.png")
     plt.close()
 
     # 2. Histograms of word count distribution for each emotion
@@ -231,7 +227,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
         sns.histplot(data[data['emotions'] == emotion]['word_count'], bins=30)
         plt.title(f'Word Count Distribution - {emotion}')
     plt.tight_layout()
-    plt.savefig(os.path.join(report_dir, "visualizations", "word_count_histograms.png"))
+    plt.savefig(report_dir / "visualizations" / "word_count_histograms.png")
     plt.close()
 
     # 3. Bar plot comparing average word count across emotions
@@ -239,9 +235,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
     emotion_word_counts = data.groupby('emotions')['word_count'].mean().sort_values(ascending=False)
     sns.barplot(x=emotion_word_counts.index, y=emotion_word_counts.values)
     plt.title('Average Word Count Comparison Across Emotions')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig(os.path.join(report_dir, "visualizations", "emotion_word_count_comparison.png"))
+    plt.savefig(report_dir / "visualizations" / "emotion_word_count_comparison.png")
     plt.close()
 
     # 4. Comparison of word counts before and after preprocessing
@@ -253,9 +247,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
     })
     sns.barplot(x='emotion', y='word_count', hue='stage', data=before_after)
     plt.title('Word Count Comparison: Before vs After Preprocessing')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig(os.path.join(report_dir, "visualizations", "preprocessing_comparison.png"))
+    plt.savefig(report_dir / "visualizations" / "preprocessing_comparison.png")
     plt.close()
 
 def plot_top_words(data, report_dir):
@@ -289,11 +281,11 @@ def plot_top_words(data, report_dir):
         plt.ylabel('Words')
     
     plt.tight_layout()
-    plt.savefig(os.path.join(report_dir, "visualizations", "top_words_by_emotion.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(report_dir / "visualizations" / "top_words_by_emotion.png")
     plt.close()
     
     # Also save the raw data to a text file
-    with open(os.path.join(report_dir, "top_words_by_emotion.txt"), 'w', encoding='utf-8') as f:
+    with open(report_dir / "top_words_by_emotion.txt", 'w', encoding='utf-8') as f:
         f.write("Top 10 Words for Each Emotion Category:\n\n")
         for emotion in emotions:
             words = ' '.join(data[data['emotions'] == emotion]['excerpt_clean']).split()
@@ -312,7 +304,7 @@ def run_stacking_classifier():
     
     # Create report directory
     report_dir = create_report_directory(args)
-    print(f"Reports will be saved to: {report_dir}")
+    print(f"Reports will be saved to: {str(report_dir)}")
     
     # Load and preprocess data
     print("Loading and preprocessing data...")
@@ -413,7 +405,6 @@ def run_stacking_classifier():
     
     # Create summary report
     summary = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "dataset_info": {
             "size": len(data),
             "class_distribution": class_distribution.to_dict()
@@ -448,7 +439,7 @@ def run_stacking_classifier():
         }
     
     # Save the combined summary report
-    with open(os.path.join(report_dir, "results_summary.json"), 'w') as f:
+    with open(report_dir / "results_summary.json", 'w') as f:
         json.dump(summary, f, indent=4)
     
     # Save only the final stacking model (most important)
@@ -458,11 +449,10 @@ def run_stacking_classifier():
         "emotion_mapping": emotion_mapping
     }
     
-    with open(os.path.join(report_dir, "models", "stacking_model.pkl"), 'wb') as f:
+    with open(report_dir / "models" / "stacking_model.pkl", 'wb') as f:
         pickle.dump(model_info, f)
     
-    print(f"\nResults and model saved to {report_dir}")
-    return report_dir
+    print(f"\nResults and model saved to {str(report_dir)}")
 
 
 if __name__ == "__main__":
