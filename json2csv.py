@@ -31,33 +31,46 @@ def get_args() -> ArgumentParser:
         Emotions must be given as the ordre of input files
     """
     arg: ArgumentParser = ArgumentParser(description="Filtering and reformatting data")
-    arg.add_argument("-i", "--input", nargs="+", required=True, help="input of web crawlled data, normally be a list of directories")
+    arg.add_argument("-i", "--input_folders", nargs="+", required=True, help="input of web crawlled data, normally be a list of directories")
     arg.add_argument("-e", "--emotions", required=True, nargs="+",help="emotion to save for each given folder")
     arg.add_argument("--intermedia", default=False, help="if save the intermediate data")
-    arg.add_argument("-o", "--output", required=True, help="csv result")
+    arg.add_argument("-o", "--output_file", required=True, help="csv result")
     return arg.parse_args()
+from typing import List
 
-def select_emotion(args) -> Corpus:
+def select_emotion(folders: List, emotions: List) -> Corpus:
     """
-    Read several folders and return same number of folders of articles correspond to given emotion
+    Filters articles from a list of folders, keeping only those that are labeled 
+    with a single, specified emotion.
+
+    Each folder corresponds to a specific emotion. For each JSON file in the folder,
+    the function loads its contents and selects articles that are labeled with the 
+    target emotion and only that emotion.
+
+    Args:
+        folders (List): A list of folder paths containing JSON files. 
+                        Each folder should contain data corresponding to a single emotion.
+                        Example: ["fear_output/data/", "love_output/data/"]
+        emotions (List): A list of target emotions corresponding to each folder.
+                         The order of emotions must match the order of folders.
 
     Returns:
-        Corpus: selected corpus
+        Corpus: A Corpus object containing only the filtered articles that match 
+                the specified criteria.
     """
     filtered_corpus = Corpus()
-
-    for idx, directory in enumerate(args.input):
-        print(f"current folder {directory}, select emotion {args.emotions[idx]}")
-
-        for file in Path(directory).iterdir():
+    for idx, folder in enumerate(folders):
+        print(f"Current folder: {folder.name}, target emotion: {emotions[idx]}")
+        json_files = list(folder.rglob("*json"))
+        for file in json_files:
             corpus = load_json(file)
             for article in corpus.articles:
-                if args.emotions[idx] in article.emotions and len(article.emotions) == 1:
+                if emotions[idx] in article.emotions and len(article.emotions) == 1:
                     filtered_corpus.articles.append(article)
 
-    print(f"total articles after the selection: {len(filtered_corpus.articles)}")
+    print(f"Total articles after selection: {len(filtered_corpus.articles)}")
     return filtered_corpus
-    
+
 def corpus_to_df(corpus: Corpus) -> pd.DataFrame:
     """
     Convert a Corpus to a DataFrame for CSV export.
@@ -87,15 +100,17 @@ def main() -> None:
     """
     Main function to process JSON files and convert them to a single CSV.
     """
+
     try:
         args = get_args()
+        folders = Path(args.input_folders)
+        emotions = args.emotions
     except:
         raise ValueError("to use python json2csv -i ../data/disgust_output/data/ ../data/love_output/data/ ../data/fear_output/data/ -e disgust love fear -o output.csv")
     
 
     print("Loading data...")
-    filtered_corpus = select_emotion(args)
-
+    filtered_corpus = select_emotion(folders, emotions)
     if args.intermedia:
         dir = create_directory()
         json.dump(filtered_corpus,dir,ensure_ascii=None,indent=2)
