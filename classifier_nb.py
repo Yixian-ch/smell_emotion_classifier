@@ -1,22 +1,20 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
+import spacy
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+nlp = spacy.load('fr_core_news_sm')
+fr_stop = nlp.Defaults.stop_words
 
 df_surprise = pd.read_csv("surprise.csv")
 df_fear = pd.read_csv("fear.csv")
 df_love = pd.read_csv("love.csv")
 df_disgust = pd.read_csv("disgust.csv")
 df = pd.concat([df_surprise, df_fear, df_disgust, df_love])
-
 X = df['text']
 y = df['emotion']
-
-X_train_text, X_test_text, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=25, stratify=y
-)
+X_train_text, X_test_text, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=25, stratify=y)
 
 vectorizer = TfidfVectorizer(stop_words=list(fr_stop))
 X_train = vectorizer.fit_transform(X_train_text)
@@ -35,7 +33,7 @@ top_n = 20
 
 for i, label in enumerate(class_labels):
     print(f"\nTop {top_n} words for class '{label}':")
-    top_features = log_probs[i].argsort()[::-1][:top_n]
+    top_features = log_probs[i].argsort()[-top_n:][::-1]
     for idx in top_features:
         word = feature_names[idx]
         weight = log_probs[i][idx]
