@@ -3,7 +3,6 @@ import pandas as pd
 import re
 import nltk
 import json
-from datetime import datetime
 from nltk.stem.snowball import FrenchStemmer
 from nltk.tokenize import RegexpTokenizer
 # from nltk.wordnet import WordNetLemmatizer
@@ -213,14 +212,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
     """
     Create visualizations for word count distributions
     """
-    # 1. Box plot of word count distribution
-    plt.figure(figsize=(12, 6))
-    sns.boxplot(x='emotions', y='word_count', data=data)
-    plt.title('Word Count Distribution Box Plot')
-    plt.savefig(report_dir / "visualizations" / "word_count_boxplot.png")
-    plt.close()
-
-    # 2. Histograms of word count distribution for each emotion
+    # 1. Histograms of word count distribution for each emotion
     plt.figure(figsize=(15, 10))
     for i, emotion in enumerate(data['emotions'].unique()):
         plt.subplot(2, 2, i+1)
@@ -230,7 +222,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
     plt.savefig(report_dir / "visualizations" / "word_count_histograms.png")
     plt.close()
 
-    # 3. Bar plot comparing average word count across emotions
+    # 2. Bar plot comparing average word count across emotions
     plt.figure(figsize=(10, 6))
     emotion_word_counts = data.groupby('emotions')['word_count'].mean().sort_values(ascending=False)
     sns.barplot(x=emotion_word_counts.index, y=emotion_word_counts.values)
@@ -238,7 +230,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
     plt.savefig(report_dir / "visualizations" / "emotion_word_count_comparison.png")
     plt.close()
 
-    # 4. Comparison of word counts before and after preprocessing
+    # 3. Comparison of word counts before and after preprocessing
     plt.figure(figsize=(12, 6))
     before_after = pd.DataFrame({
         'emotion': list(emotions_count_before.keys()) + list(emotions_count_after.keys()),
@@ -298,7 +290,9 @@ def plot_top_words(data, report_dir):
 
 # Main function to run the stacking classifier
 def run_stacking_classifier():
-    """Main function to run the stacking classifier with preprocessing"""
+    """
+    Task 4:Main function to run the stacking classifier with preprocessing
+    """
     # Parse arguments
     args = get_args()
     
