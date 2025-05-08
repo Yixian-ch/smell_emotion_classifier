@@ -26,7 +26,8 @@ def get_args() -> ArgumentParser:
         ArgumentParser: Parsed command line arguments
         
     Example:
-        python json2csv.py -i input1.json input2.json -e emotion1 emotion2 -o output.csv
+        python json2csv.py -i ../data/disgust_output/data/ ../data/love_output/data/ ../data/fear_output/data/ -e disgust love fear -o ../test.csv
+
         Emotions must be given as the ordre of input files
     """
     arg: ArgumentParser = ArgumentParser()
@@ -88,7 +89,7 @@ def main() -> None:
     try:
         args = get_args()
     except:
-        raise ValueError("to use python json2csv -i inputpath -o output")
+        raise ValueError("to use python json2csv -i ../data/disgust_output/data/ ../data/love_output/data/ ../data/fear_output/data/ -e disgust love fear -o output.csv")
     
     # Load and preprocess data
     print("Loading data...")
