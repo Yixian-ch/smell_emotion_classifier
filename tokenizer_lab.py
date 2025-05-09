@@ -9,6 +9,7 @@ def get_args():
     """
     CLI:
     python tokenizer_lab.py -ip <CSV file> -nd <number of documents> -sw <stopword library or "none">
+    Note: min_df is set to 2. 
     """
     parser = argparse.ArgumentParser(description='Compare CountVectorizer and TfidfVectorizer on a French corpus')
     parser.add_argument("-nd", "--nb_docs", required=True, type=int)
@@ -27,7 +28,7 @@ def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
     docs = df["text"].head(nb_docs).str.lower()
 
     if stop_words_lib == "spacy":
-        stop_words = list(spacy_french_stopwords)
+        stop_words = list(spacy_french_stopwords) +['neuf', 'qu', 'quelqu','bien', 'amour', 'eft']
     elif stop_words_lib == "nltk":
         stop_words = stopwords.words('french')
     elif stop_words_lib == "combined":
@@ -46,17 +47,18 @@ def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
 
         matrix = vectorizer.fit_transform(docs)
         feature_names = vectorizer.get_feature_names_out()
+
         df_vector = pd.DataFrame(matrix.toarray(), columns=feature_names)
 
         top_n = 20
         total_scores = df_vector.sum(axis=0)
         top_words = total_scores.sort_values(ascending=False).head(top_n)
-
+        print(f"Stop words library: {args.stop_words_lib.upper()}")
+        print(f"Data name: {Path(args.input_path).name} ")
         print(f"Top {top_n} words for {nb_docs} docs:")
         print(f"Total number of features for {name}: {len(feature_names)}\n")
         print(top_words)
 
 if __name__ == "__main__":
     args = get_args()
-    print(f"Stop words library: {args.stop_words_lib.upper()}")
     run_tokenizers(Path(args.input_path), args.nb_docs, args.stop_words_lib)
