@@ -17,7 +17,7 @@ def get_args():
     parser.add_argument("-sw", "--stop_words_lib", choices=("nltk", "spacy", "combined", "none"), help="Choose stopword source", required=True)
     return parser.parse_args()
 
-def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
+def run_vectorizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
     """
     This script applies both CountVectorizer and TfidfVectorizer to help evaluate 
     which tokenizer works best for a given French corpus. It also lets you compare 
@@ -37,12 +37,12 @@ def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
     else:
         stop_words = None
 
-    tokenizers = {
+    vectorizers = {
         "CountVectorizer": CountVectorizer(stop_words=stop_words, min_df=2),
         "TfidfVectorizer": TfidfVectorizer(stop_words=stop_words, min_df=2)
     }
 
-    for name, vectorizer in tokenizers.items():
+    for name, vectorizer in vectorizers.items():
         print(f"\nVectorizer: {name}")
 
         matrix = vectorizer.fit_transform(docs)
@@ -61,4 +61,4 @@ def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
 
 if __name__ == "__main__":
     args = get_args()
-    run_tokenizers(Path(args.input_path), args.nb_docs, args.stop_words_lib)
+    run_vectorizers(Path(args.input_path), args.nb_docs, args.stop_words_lib)
