@@ -72,11 +72,9 @@ def preprocessing(text):
     tokenizer = RegexpTokenizer(r'\w+')
     tokens = tokenizer.tokenize(text)
     
-    # Initialize French stemmer
-    stemmer = FrenchStemmer()
     
-    # Apply stemming and remove stopwords
-    tokens = [stemmer.stem(token) for token in tokens if token not in stop_words and len(token) > 1]
+    # Remove stopwords
+    tokens = [token for token in tokens if token not in stop_words and len(token) > 1]
     
     # Join tokens back into a string
     return " ".join(tokens)
@@ -103,7 +101,6 @@ def load_data(args):
     print(f"Before preprocessing each emotion has {emotions_count_before} words")
     
     # Apply preprocessing
-    print("Applying preprocessing with stemming")
     data["excerpt_clean"] = data['excerpt'].apply(preprocessing)
     
     # Calculate word count after preprocessing
@@ -244,7 +241,7 @@ def plot_word_distributions(data, report_dir, emotions_count_before, emotions_co
 
 def plot_top_words(data, report_dir):
     """
-    Create visualization for top 10 words in each emotion category
+    Create visualization for top 15 words in each emotion category
     """
     # Create a figure with subplots for each emotion
     plt.figure(figsize=(15, 10))
@@ -260,15 +257,15 @@ def plot_top_words(data, report_dir):
         # Count word frequencies
         word_freq = pd.Series(words).value_counts()
         
-        # Get top 10 words
-        top_words = word_freq.head(10)
+        # Get top 15 words
+        top_words = word_freq.head(15)
         
         # Create subplot
         plt.subplot(2, 2, i+1)
         
         # Create horizontal bar plot
         sns.barplot(x=top_words.values, y=top_words.index)
-        plt.title(f'Top 10 Words - {emotion}')
+        plt.title(f'Top 15 Words - {emotion}')
         plt.xlabel('Frequency')
         plt.ylabel('Words')
     
@@ -278,11 +275,11 @@ def plot_top_words(data, report_dir):
     
     # Also save the raw data to a text file
     with open(report_dir / "top_words_by_emotion.txt", 'w', encoding='utf-8') as f:
-        f.write("Top 10 Words for Each Emotion Category:\n\n")
+        f.write("Top 15 Words for Each Emotion Category:\n\n")
         for emotion in emotions:
             words = ' '.join(data[data['emotions'] == emotion]['excerpt_clean']).split()
             word_freq = pd.Series(words).value_counts()
-            top_words = word_freq.head(10)
+            top_words = word_freq.head(15)
             
             f.write(f"\n{emotion.upper()}:\n")
             for word, freq in top_words.items():
@@ -292,21 +289,21 @@ def evaluate_model(y_true, y_pred, emotion_names):
     """
     Comprehensive model evaluation
     """
-    # 计算各种指标
+    # Calculate various metrics
     accuracy = accuracy_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='macro')
     report = classification_report(y_true, y_pred, target_names=emotion_names)
     
-    # 计算每个类别的召回率
+    # Calculate recall for each class
     recalls = {}
     for i, emotion in enumerate(emotion_names):
         recall = recall_score(y_true, y_pred, labels=[i], average='micro')
         recalls[emotion] = float(recall)
     
-    # 计算宏平均召回率
+    # Calculate macro average recall
     macro_recall = recall_score(y_true, y_pred, average='macro')
     
-    # 保存详细结果
+    # Save detailed results
     results = {
         'accuracy': float(accuracy),
         'f1_score': float(f1),
@@ -360,21 +357,69 @@ def run_stacking_classifier():
     # Convert Series to lists for easier handling
     X_train_list = X_train.tolist()
     X_test_list = X_test.tolist()
-    
+
+    # Get vocabulary size after vectorization
+    print("\nAnalyzing vocabulary size...")
+    # Test different min_df values
+    print("\nTesting different min_df values:")
+    with open("./stopwords-fr.txt") as f:
+        stop_words = f.read().split()
+
+
+    for min_df in [1, 2, 3, 4, 5]:
+        # Get vocabulary using CountVectorizer
+        count_vectorizer = CountVectorizer(min_df=min_df)
+        count_vectorizer.fit(X_train_list)
+        count_vocab_size = len(count_vectorizer.vocabulary_)
+        
+        # Get vocabulary using TfidfVectorizer
+        tfidf_vectorizer = TfidfVectorizer(min_df=min_df, sublinear_tf=True)
+        tfidf_vectorizer.fit(X_train_list)
+        tfidf_vocab_size = len(tfidf_vectorizer.vocabulary_)
+        
+        print(f"\nmin_df={min_df}:")
+        print(f"CountVectorizer vocabulary size: {count_vocab_size}")
+        print(f"TfidfVectorizer vocabulary size: {tfidf_vocab_size}")
+        
+        # Get the actual words in vocabulary
+        if min_df == 1:
+            print("\nSample of words in vocabulary (min_df=1):")
+            words = list(count_vectorizer.vocabulary_.keys())[:10]
+            print(words)
+        
+        # Compare with previous vocabulary
+        if min_df > 1:
+            prev_vectorizer = CountVectorizer(min_df=min_df-1)
+            prev_vectorizer.fit(X_train_list)
+            prev_words = set(prev_vectorizer.vocabulary_.keys())
+            curr_words = set(count_vectorizer.vocabulary_.keys())
+            
+            # Find words that are in current but not in previous
+            new_words = curr_words - prev_words
+            if new_words:
+                print(f"\nNew words added with min_df={min_df}:")
+                print(list(new_words)[:10])
+            
+            # Find words that are in previous but not in current
+            removed_words = prev_words - curr_words
+            if removed_words:
+                print(f"\nWords removed with min_df={min_df}:")
+                print(list(removed_words)[:10])
+
     # Define base classifiers
     print("\nDefining base classifiers...")
     nb_pipeline = Pipeline([
-        ('i', CountVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.9)),
+        ('i', CountVectorizer(stop_words=stop_words,min_df=2, max_df=0.9)),
         ('classifier', MultinomialNB(alpha=0.5))
     ])
     
     svm_pipeline = Pipeline([
-        ('vectorizer', TfidfVectorizer(ngram_range=(1, 2), min_df=2, sublinear_tf=True)),
+        ('vectorizer', TfidfVectorizer(stop_words=stop_words,min_df=2, sublinear_tf=True)),
         ('classifier', SVC(kernel='linear', C=1.0, probability=True, class_weight='balanced', random_state=42))
     ])
     
     rf_pipeline = Pipeline([
-        ('vectorizer', TfidfVectorizer(ngram_range=(1, 2), min_df=2, sublinear_tf=True)),
+        ('vectorizer', TfidfVectorizer(stop_words=stop_words,min_df=2, sublinear_tf=True)),
         ('classifier', RandomForestClassifier(n_estimators=80, max_depth=6, class_weight='balanced', random_state=42))
     ])
     
@@ -427,10 +472,10 @@ def run_stacking_classifier():
     # Create and save the confusion matrix
     plot_confusion_matrix(y_test, y_meta_pred, emotion_names, report_dir)
     
-    # 评估最终模型
+    # Evaluate final model
     final_results = evaluate_model(y_test, y_meta_pred, emotion_names)
     
-    # 创建总结报告
+    # Create summary report
     summary = {
         "dataset_info": {
             "size": len(data),
@@ -446,14 +491,14 @@ def run_stacking_classifier():
         "base_classifiers": {}
     }
     
-    # 评估并添加各个基分类器的结果
+    # Evaluate and add individual base classifiers to summary
     print("\n===== Base Classifier Performance =====")
     
     for name, pipeline in base_classifiers.items():
-        # 获取预测
+        # Get predictions
         y_pred = pipeline.predict(X_test_list)
         
-        # 计算指标
+        # Calculate metrics
         results = evaluate_model(y_test, y_pred, emotion_names)
         
         print(f"\n{name}:")
@@ -461,7 +506,7 @@ def run_stacking_classifier():
         print(f"Macro F1: {results['f1_score']:.4f}")
         print(f"Macro Recall: {results['macro_recall']:.4f}")
         
-        # 添加到总结
+        # Add to summary
         summary["base_classifiers"][name] = {
             "accuracy": results['accuracy'],
             "f1_score": results['f1_score'],
@@ -469,11 +514,11 @@ def run_stacking_classifier():
             "per_class_recall": results['per_class_recall']
         }
     
-    # 保存总结报告
+    # Save the summary report
     with open(report_dir / "results_summary.json", 'w') as f:
         json.dump(summary, f, indent=4)
     
-    # 打印最终结果
+    # Print final results
     print("\n===== Final Results =====")
     print(f"Accuracy: {final_results['accuracy']:.4f}")
     print(f"Macro F1: {final_results['f1_score']:.4f}")
