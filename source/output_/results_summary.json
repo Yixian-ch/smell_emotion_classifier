@@ -9,49 +9,49 @@
         }
     },
     "stacking_model": {
-        "accuracy": 0.9595375722543352,
-        "f1_score": 0.9564338754447546,
-        "macro_recall": 0.9585939078601737,
+        "accuracy": 0.953757225433526,
+        "f1_score": 0.9498409176514903,
+        "macro_recall": 0.9511681652859163,
         "per_class_recall": {
             "fear": 0.9489795918367347,
             "love": 0.975,
             "disgust": 0.95,
-            "surprise": 0.9603960396039604
+            "surprise": 0.9306930693069307
         },
-        "classification_report": "              precision    recall  f1-score   support\n\n        fear       0.92      0.95      0.93        98\n        love       0.98      0.97      0.98       160\n     disgust       0.97      0.95      0.96       160\n    surprise       0.94      0.96      0.95       101\n\n    accuracy                           0.96       519\n   macro avg       0.95      0.96      0.96       519\nweighted avg       0.96      0.96      0.96       519\n"
+        "classification_report": "              precision    recall  f1-score   support\n\n        fear       0.90      0.95      0.93        98\n        love       0.97      0.97      0.97       160\n     disgust       0.97      0.95      0.96       160\n    surprise       0.95      0.93      0.94       101\n\n    accuracy                           0.95       519\n   macro avg       0.95      0.95      0.95       519\nweighted avg       0.95      0.95      0.95       519\n"
     },
     "base_classifiers": {
         "MultinomialNB": {
-            "accuracy": 0.8709055876685935,
-            "f1_score": 0.8542828481698522,
-            "macro_recall": 0.8435236285108103,
+            "accuracy": 0.884393063583815,
+            "f1_score": 0.8764898080011101,
+            "macro_recall": 0.868985843099616,
             "per_class_recall": {
-                "fear": 0.6632653061224489,
-                "love": 0.95625,
-                "disgust": 0.9625,
-                "surprise": 0.7920792079207921
+                "fear": 0.7755102040816326,
+                "love": 0.93125,
+                "disgust": 0.9375,
+                "surprise": 0.8316831683168316
             }
         },
         "SVM": {
-            "accuracy": 0.9595375722543352,
-            "f1_score": 0.9561643671406932,
-            "macro_recall": 0.9557798924025056,
+            "accuracy": 0.9479768786127167,
+            "f1_score": 0.9430833221799402,
+            "macro_recall": 0.9435151040614265,
             "per_class_recall": {
-                "fear": 0.9387755102040817,
-                "love": 0.9875,
-                "disgust": 0.95625,
-                "surprise": 0.9405940594059405
+                "fear": 0.9183673469387755,
+                "love": 0.975,
+                "disgust": 0.95,
+                "surprise": 0.9306930693069307
             }
         },
         "RandomForest": {
-            "accuracy": 0.8747591522157996,
-            "f1_score": 0.8584847725695637,
-            "macro_recall": 0.8563030410183876,
+            "accuracy": 0.8805394990366089,
+            "f1_score": 0.868933055198357,
+            "macro_recall": 0.8676828652252981,
             "per_class_recall": {
-                "fear": 0.8571428571428571,
-                "love": 0.9625,
+                "fear": 0.8979591836734694,
+                "love": 0.9375,
                 "disgust": 0.9125,
-                "surprise": 0.693069306930693
+                "surprise": 0.7227722772277227
             }
         }
     }

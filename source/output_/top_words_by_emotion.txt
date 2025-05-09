@@ -1,50 +1,70 @@
-Top 10 Words for Each Emotion Category:
+Top 15 Words for Each Emotion Category:
 
 
 LOVE:
-parfum: 2095
-fleur: 1664
-amour: 1428
-odor: 902
-affect: 783
-ros: 722
-aim: 662
-femm: 435
-feuill: 415
-don: 412
-
-DISGUST:
-saveur: 1913
-fort: 1650
-eau: 1570
-désagré: 1325
-amer: 1315
-goût: 943
-acid: 938
-nauséabond: 929
-part: 924
-plant: 919
+odorantes: 633
+parfums: 532
+affection: 420
+fleur: 389
+feuilles: 370
+rose: 358
+doux: 315
+affections: 312
+femme: 309
+blanches: 273
+jour: 271
+roses: 269
+air: 261
+yeux: 258
+jeune: 248
 
 FEAR:
-dang: 635
-eau: 388
+danger: 633
 feu: 313
-air: 307
-mort: 294
-incend: 270
-danger: 262
-fort: 242
-fabriqu: 230
-mauvais: 201
+air: 299
+incendie: 260
+mort: 238
+eau: 237
+mauvaise: 176
+gaz: 158
+émanations: 151
+eaux: 151
+nuit: 149
+fumée: 145
+faire: 142
+fabrication: 141
+temps: 135
+
+DISGUST:
+saveur: 1889
+eau: 1326
+désagréable: 1220
+forte: 1039
+amère: 909
+goût: 884
+acide: 811
+nauséabonde: 802
+feuilles: 767
+couleur: 714
+plante: 701
+air: 695
+fétide: 602
+aromatique: 579
+jaune: 545
 
 SURPRISE:
-parfum: 799
-eau: 447
-fleur: 446
-air: 419
-fort: 382
-jour: 307
-don: 303
-trouv: 295
-éton: 293
-sent: 284
+air: 389
+eau: 351
+parfums: 238
+temps: 235
+point: 228
+jamais: 202
+terre: 189
+forte: 188
+odorat: 184
+jour: 176
+yeux: 176
+faire: 170
+peine: 168
+acide: 163
+coup: 162
