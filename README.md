@@ -66,7 +66,18 @@ python filter_data-emotion.py -ip task_1_output/surprise -op task_2_output -e su
 
 # Step 3: Concatenate all emotion CSVs into a single dataset
 python concatenate_csv.py --input data/processed/disgust.csv data/processed/love.csv data/processed/fear.csv data/processed/surprise.csv --output data/final/all_emotions.csv
+
+
 ```
+### Testing vectorizer config & Stopword Impact on Corpus Dimensionality
+
+```
+python vectorizer_lab.py -ip corpus.csv -nd 400 -sw none
+python vectorizer_lab.py -ip corpus.csv -nd 400 -sw nltk
+python vectorizer_lab.py -ip corpus.csv -nd 400 -sw spacy
+python vectorizer_lab.py -ip corpus.csv -nd 400 -sw combined
+```
+
 
 ### Modeling
 
