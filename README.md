@@ -22,8 +22,10 @@ You can access our processed data on [Google Drive](https://drive.google.com/dri
 ### Data Collection
 
 1. Web Crawling:
+
+python webcrawl.py -bu <base_url> -od <output_directory> -pr <start_page> <end_page(inclusive)>
 ```bash
-python webcrawl.py --api-url "https://explorer.odeuropa.eu/api/search?filter_emotion=http://data.odeuropa.eu/vocabulary/plutchik/disgust&filter_language=fr&hl=en&page={page}&sort=&type=smells" --start-page 1 --end-page 50 --output-folder "data/disgust_output"
+python webcrawl.py -bu "https://explorer.odeuropa.eu/api/search?filter_emotion=http://data.odeuropa.eu/vocabulary/plutchik/disgust&filter_language=fr&hl=en&page={page}&sort=&type=smells" -pr 1 5 -od "data/disgust_output"
 ```
    - Output: [data](https://drive.google.com/drive/folders/1KXq1Ulc01vNQN3bL8O-58WdWGYS39En4)
 
@@ -44,16 +46,23 @@ python webcrawl.py --api-url "https://explorer.odeuropa.eu/api/search?filter_emo
 ```bash
 # Step 1: Filter the corpus to keep only articles with the target emotion
 # Repeat this for each emotion (fear, love, disgust, surprise)
-python filter_data-emotion.py -ip data/fear_output -op data/task_1_output -e fear -t filter_corpus
-python filter_data-emotion.py -ip data/love_output -op data/task_1_output -e love -t filter_corpus
-python filter_data-emotion.py -ip data/disgust_output -op data/task_1_output -e disgust -t filter_corpus
-python filter_data-emotion.py -ip data/surprise_output -op data/task_1_output -e surprise -t filter_corpus
+python filter_data-emotion.py -ip disgust_output/data -op task_1_output/disgust -e disgust -t filter_corpus
+
+python filter_data-emotion.py -ip love_output/data -op task_1_output/love -e love -t filter_corpus
+
+python filter_data-emotion.py -ip fear_output/data -op task_1_output/fear -e fear -t filter_corpus
+
+python filter_data-emotion.py -ip surprise_output/data -op task_1_output/surprise -e surprise -t filter_corpus
 
 # Step 2: Convert the filtered JSON files to separate CSVs
-python filter_data-emotion.py -ip data/task_1_output/fear -op data/processed -e fear -t json_to_csv
-python filter_data-emotion.py -ip data/task_1_output/love -op data/processed -e love -t json_to_csv
-python filter_data-emotion.py -ip data/task_1_output/disgust -op data/processed -e disgust -t json_to_csv
-python filter_data-emotion.py -ip data/task_1_output/surprise -op data/processed -e surprise -t json_to_csv
+python filter_data-emotion.py -ip task_1_output/disgust -op task_2_output -e disgust -t json_to_csv  
+
+python filter_data-emotion.py -ip task_1_output/love -op task_2_output -e love -t json_to_csv  
+
+python filter_data-emotion.py -ip task_1_output/fear -op task_2_output -e fear -t json_to_csv  
+
+python filter_data-emotion.py -ip task_1_output/surprise -op task_2_output -e surprise -t json_to_csv  
+
 
 # Step 3: Concatenate all emotion CSVs into a single dataset
 python concatenate_csv.py --input data/processed/disgust.csv data/processed/love.csv data/processed/fear.csv data/processed/surprise.csv --output data/final/all_emotions.csv
