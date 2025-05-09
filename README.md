@@ -41,7 +41,7 @@ python webcrawl.py -bu "https://explorer.odeuropa.eu/api/search?filter_emotion=h
        - The actual excerpts (texts)
 
 
-2. Processing JSON to CSV (multistep process):
+2. Filtering and Formatting the data (multistep process):
 
 ```bash
 # Step 1: Filter the corpus to keep only articles with the target emotion
@@ -54,7 +54,7 @@ python filter_data-emotion.py -ip fear_output/data -op task_1_output/fear -e fea
 
 python filter_data-emotion.py -ip surprise_output/data -op task_1_output/surprise -e surprise -t filter_corpus
 
-# Step 2: Convert the filtered JSON files to separate CSVs
+# Step 2: Using the output from Task 1, iterate through the folder of filtered JSON files. For each JSON file, concatenate the articles and add the combined text as a single row in the final CSV file for that emotion.
 python filter_data-emotion.py -ip task_1_output/disgust -op task_2_output -e disgust -t json_to_csv  
 
 python filter_data-emotion.py -ip task_1_output/love -op task_2_output -e love -t json_to_csv  
@@ -98,8 +98,7 @@ Raw Data Collection → Filtering → JSON to CSV Conversion → Concatenation �
 ```
 
 1. **Web Crawling**: Extract data from Odeuropa API
-2. **Filtering**: Keep only documents with specific target emotions
-3. **Conversion**: Transform JSON files to CSV format for each emotion
+2. **Filtering & Formatting**: Keep only documents with target emotions and concatenate filtered articles into emotion specific rows for augmented documents.
 4. **Concatenation**: Combine all emotion CSVs into a single dataset
 5. **Preprocessing**: Handle OCR noise, stopwords, and feature reduction
 6. **Model Training**: Implement stacking ensemble with base classifiers
@@ -107,7 +106,8 @@ Raw Data Collection → Filtering → JSON to CSV Conversion → Concatenation �
 
 ## Contributors
 
-- **Jocelyn Zaruma**: Led data collection, corpus development, data quality verification, and documentation
+- **Jocelyn Zaruma**: Led data collection and corpus development, verified data quality, corpus statistics, text representation, and conducted preliminary data preprocessing.
+
 - **Xingyu Chen**: Focused on model implementation, preprocessing pipeline, visualization, and evaluation
 
 
