@@ -8,7 +8,7 @@ from pathlib import Path
 def get_args():
     """
     CLI:
-    python tokenizer_lab.py -ip <CSV file> -nd <number of documents> -sw <stopword library or "none">
+    python vectorizer_lab.py -ip <CSV file> -nd <number of documents> -sw <stopword library or "none">
     Note: min_df is set to 2. 
     """
     parser = argparse.ArgumentParser(description='Compare CountVectorizer and TfidfVectorizer on a French corpus')
@@ -43,7 +43,7 @@ def run_tokenizers(path: Path, nb_docs: int, stop_words_lib: str) -> None:
     }
 
     for name, vectorizer in tokenizers.items():
-        print(f"\nTokenizer: {name}")
+        print(f"\nVectorizer: {name}")
 
         matrix = vectorizer.fit_transform(docs)
         feature_names = vectorizer.get_feature_names_out()
