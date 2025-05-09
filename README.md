@@ -101,18 +101,6 @@ Raw Data Collection → Filtering → JSON to CSV Conversion → Concatenation �
 - **Jocelyn Zaruma**: Led data collection, corpus development, data quality verification, and documentation
 - **Xingyu Chen**: Focused on model implementation, preprocessing pipeline, visualization, and evaluation
 
-## Future Work
-
-Potential improvements and research directions include:
-- Exploring deep learning architectures (BERT, RoBERTa) for French text
-- Enhancing web crawling with LLM-based approaches
-- Implementing more sophisticated ensemble methods
-- Adding linguistic features like part-of-speech tagging
-- Using LLMs to correct OCR errors in historical texts
-
-## License
-
-This project is licensed under the CC-BY-4.0 license, in accordance with the Odeuropa dataset license.
 
 ## Repository
 
